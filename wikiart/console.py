@@ -85,7 +85,7 @@ class Console:
             f.fetch_artists()
 
             if args.only == 'paintings':
-                f.fetch_all_paintings()
+                f.fetch_all_paintings().copy_everything()
 
         if args.check: f.check(only=args.only)
 

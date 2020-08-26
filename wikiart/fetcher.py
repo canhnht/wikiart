@@ -10,12 +10,30 @@ import shutil
 import time
 import urllib.error
 import urllib.request
+from html.parser import HTMLParser
 
 import requests
 
 from . import settings, base
 from .base import Logger
 
+
+class MyHTMLParser(HTMLParser):
+    is_public_domain = False
+
+    def handle_starttag(self, tag, attrs):
+        if tag == 'html':
+            self.is_public_domain = False
+
+        if self.is_public_domain:
+            return
+
+        if tag == 'i':
+            for attr in attrs:
+                if attr[0] == 'class' and attr[1] == 'copyright-icon-public-domain':
+                    self.is_public_domain = True
+                    return
+parser = MyHTMLParser()
 
 class WikiArtFetcher:
     """WikiArt Fetcher.
@@ -146,6 +164,13 @@ class WikiArtFetcher:
                 Logger.info('%i%% done' % (100 * (i + 1) // len(self.artists)))
         return self
 
+    def is_public_domain(self, painting):
+        painting_slug = painting['url']
+        artist_slug = painting['artistUrl']
+        page = requests.get(f'https://www.wikiart.org/en/{artist_slug}/{painting_slug}')
+        parser.feed(page.text)
+        return parser.is_public_domain
+
     def fetch_paintings(self, artist):
         """Retrieve and Save Paintings Info from WikiArt.
 
@@ -173,6 +198,7 @@ class WikiArtFetcher:
             response.raise_for_status()
             data = response.json()
 
+            public_data = []
             for painting in data:
                 # We have some info about the images,
                 # but we're also after their details.
@@ -188,15 +214,21 @@ class WikiArtFetcher:
                     # Update paintings with its details.
                     painting.update(response.json())
 
-                Logger.write('.', end='', flush=True)
+                # Check for public domain painting
+                if self.is_public_domain(painting):
+                    public_data.append(painting)
+                    Logger.write('.', end='', flush=True)
+                    if len(public_data) == 3:
+                        break
 
             if self.commit:
+                print('public_data', len(public_data))
                 # Save the json file with images details.
                 with open(filename, 'w', encoding='utf-8') as f:
-                    json.dump(data, f, indent=4, ensure_ascii=False)
+                    json.dump(public_data, f, indent=4, ensure_ascii=False)
 
             Logger.write(' Done (%.2f sec)' % (time.time() - elapsed))
-            return data
+            return public_data
 
         except (IOError, urllib.error.HTTPError) as e:
             Logger.write(' Failed (%s)' % str(e))
