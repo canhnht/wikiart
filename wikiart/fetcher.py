@@ -218,8 +218,6 @@ class WikiArtFetcher:
                 if self.is_public_domain(painting):
                     public_data.append(painting)
                     Logger.write('.', end='', flush=True)
-                    if len(public_data) == 3:
-                        break
 
             if self.commit:
                 print('public_data', len(public_data))
