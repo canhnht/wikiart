@@ -33,7 +33,10 @@ class MyHTMLParser(HTMLParser):
                 if attr[0] == 'class' and attr[1] == 'copyright-icon-public-domain':
                     self.is_public_domain = True
                     return
+
+
 parser = MyHTMLParser()
+
 
 class WikiArtFetcher:
     """WikiArt Fetcher.
@@ -54,7 +57,8 @@ class WikiArtFetcher:
         """Prepare for data extraction."""
         os.makedirs(settings.BASE_FOLDER, exist_ok=True)
         os.makedirs(os.path.join(settings.BASE_FOLDER, 'meta'), exist_ok=True)
-        os.makedirs(os.path.join(settings.BASE_FOLDER, 'images'), exist_ok=True)
+        os.makedirs(os.path.join(
+            settings.BASE_FOLDER, 'images'), exist_ok=True)
         return self
 
     def check(self, only='all'):
@@ -67,8 +71,8 @@ class WikiArtFetcher:
 
         if only in ('artists', 'all'):
             # Check for artists file.
-            if not os.path.exists(os.path.join(meta_dir, 'artists.json')):
-                Logger.warning('artists.json is missing.')
+            if not os.path.exists(os.path.join(meta_dir, settings.ARTISTS_FILE)):
+                Logger.warning('%s is missing.' % settings.ARTISTS_FILE)
 
         if only in ('paintings', 'all'):
             for artist in self.artists:
@@ -92,14 +96,15 @@ class WikiArtFetcher:
     def getauthentication(self):
         """fetch a session key from WikiArt"""
         params = {}
-        params['accessCode'] = input('Please enter the Access code from https://www.wikiart.org/en/App/GetApi :')
+        params['accessCode'] = input(
+            'Please enter the Access code from https://www.wikiart.org/en/App/GetApi :')
         params['secretCode'] = input("Enter the Secret code :")
         url = 'https://www.wikiart.org/en/Api/2/login'
 
         try:
             response = requests.get(url,
-                                   params=params,
-                                   timeout=settings.METADATA_REQUEST_TIMEOUT)
+                                    params=params,
+                                    timeout=settings.METADATA_REQUEST_TIMEOUT)
             response.raise_for_status()
             data = response.json()
             return data['SessionKey']
@@ -117,7 +122,8 @@ class WikiArtFetcher:
         """Retrieve Artists from WikiArt."""
         Logger.info('Fetching artists...', end=' ', flush=True)
 
-        path = os.path.join(settings.BASE_FOLDER, 'meta', 'artists.json')
+        path = os.path.join(settings.BASE_FOLDER, 'meta',
+                            settings.ARTISTS_FILE)
         if os.path.exists(path) and not self.override:
             with open(path, encoding='utf-8') as f:
                 self.artists = json.load(f)
@@ -129,7 +135,7 @@ class WikiArtFetcher:
 
         try:
             url = '/'.join((settings.BASE_URL, 'Artist/AlphabetJson'))
-            params = {'v' : 'new', 'inPublicDomain' : 'true'}
+            params = {'v': 'new', 'inPublicDomain': 'true'}
             response = requests.get(url,
                                     timeout=settings.METADATA_REQUEST_TIMEOUT,
                                     params=params)
@@ -167,7 +173,8 @@ class WikiArtFetcher:
     def is_public_domain(self, painting):
         painting_slug = painting['url']
         artist_slug = painting['artistUrl']
-        page = requests.get(f'https://www.wikiart.org/en/{artist_slug}/{painting_slug}')
+        page = requests.get(
+            f'https://www.wikiart.org/en/{artist_slug}/{painting_slug}')
         parser.feed(page.text)
         return parser.is_public_domain
 
@@ -246,7 +253,8 @@ class WikiArtFetcher:
                 self.download_hard_copy(painting)
 
             if i % show_progress_at == 0:
-                Logger.info('%i%% done' % (100 * (i + 1) // len(self.painting_groups)))
+                Logger.info('%i%% done' %
+                            (100 * (i + 1) // len(self.painting_groups)))
 
         return self
 
@@ -261,7 +269,8 @@ class WikiArtFetcher:
         filename = os.path.join(settings.BASE_FOLDER,
                                 'images',
                                 painting['artistUrl'],
-                                str(painting['completitionYear']) if painting['completitionYear'] else 'unknown-year',
+                                str(painting['completitionYear']
+                                    ) if painting['completitionYear'] else 'unknown-year',
                                 str(painting['contentId']) +
                                 settings.SAVE_IMAGES_IN_FORMAT)
 
@@ -288,6 +297,7 @@ class WikiArtFetcher:
 
         except Exception as error:
             Logger.write('%s' % str(error))
-            if os.path.exists(filename): os.remove(filename)
+            if os.path.exists(filename):
+                os.remove(filename)
 
         return self
