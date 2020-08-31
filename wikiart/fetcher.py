@@ -171,6 +171,9 @@ class WikiArtFetcher:
         return self
 
     def is_public_domain(self, painting):
+        if 'url' not in painting:
+            print('exceptionallllll', painting)
+            return False
         painting_slug = painting['url']
         artist_slug = painting['artistUrl']
         page = requests.get(
