@@ -6,7 +6,7 @@ import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 ALL_DATA_INFO = '/Volumes/Young Buffalo/datasets/paintings/painter-by-numbers/all_data_info.csv'
 TRAIN_FOLDER = '/Volumes/Young Buffalo/datasets/paintings/painter-by-numbers/train'
 TEST_FOLDER = '/Volumes/Young Buffalo/datasets/paintings/painter-by-numbers/test'
-OUTPUT_FOLDER = '/Users/thanhcanh/Documents/projects/style-transfer/wikiart/wikiart-saved/dataset'
+OUTPUT_FOLDER = '/Users/thanhcanh/Documents/projects/style-transfer/wikiart/wikiart-saved/painters'
 
 all_data=pd.read_csv(ALL_DATA_INFO, encoding="utf_8")
 print("Original record size", all_data.shape)
@@ -17,7 +17,17 @@ print("Records with NaN values", recordNaN.shape)
 
 artists = [
     'jackson pollock',
-    'edvard munch'
+    'edvard munch',
+    'pablo picasso',
+    'berthe morisot',
+    'claude monet',
+    'ernst ludwig kirchner',
+    'nicholas roerich',
+    'paul cezanne',
+    'paul gauguin',
+    'sesshu toyo',
+    'vincent van gogh',
+    'wassily kandinsky'
 ]
 
 for index, row in all_data.iterrows():
@@ -25,6 +35,8 @@ for index, row in all_data.iterrows():
     in_train = row['in_train']
     folder = row['artist_group']
     filename = row['new_filename']
+    genre = row['genre']
+    style = row['style']
     if artist in artists:
         if os.path.exists(os.path.join(TRAIN_FOLDER, filename)):
             filepath = os.path.join(TRAIN_FOLDER, filename)
@@ -35,3 +47,15 @@ for index, row in all_data.iterrows():
         os.makedirs(artist_folder, exist_ok=True)
         dest = os.path.join(artist_folder, filename)
         copyfile(filepath, dest)
+
+        if pd.notna(genre):
+            genre_folder = os.path.join(OUTPUT_FOLDER, artist, 'genre', genre)
+            os.makedirs(genre_folder, exist_ok=True)
+            dest = os.path.join(genre_folder, filename)
+            copyfile(filepath, dest)
+
+        if pd.notna(style):
+            style_folder = os.path.join(OUTPUT_FOLDER, artist, 'style', style)
+            os.makedirs(style_folder, exist_ok=True)
+            dest = os.path.join(style_folder, filename)
+            copyfile(filepath, dest)
